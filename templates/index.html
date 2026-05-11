@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Tools Suite | Dashboard Profesional</title>
+    <link rel="stylesheet" href="static/css/index.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="8" y1="13" x2="16" y2="13"></line>
+                <line x1="8" y1="17" x2="16" y2="17"></line>
+            </svg>
+            PDF Tools 
+        </div>
+        <span class="pro-badge">SuperUsuario</span>
+    </header>
+
+    <main class="dashboard">
+        <h1>Conversor & Editor PDF</h1>
+        <div class="subhead">Herramientas profesionales • Conversión instantánea • Sin registro</div>
+        <div class="subhead">Sin servidores todo se ejecuta en su maquina</div>
+
+        <div class="tools-grid">
+            <!-- Word to PDF -->
+            <a href="/word-to-pdf" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#2B579A"/>
+                        <text x="16" y="22" text-anchor="middle" fill="white" font-size="16" font-weight="bold">W</text>
+                    </svg>
+                </div>
+                <h2>Word → PDF</h2>
+                <p>Convierte DOCX/DOC a PDF manteniendo diseño, fuentes y tablas.</p>
+                <span class="card-link">Convertir ahora →</span>
+            </a>
+
+            <!-- PPTX to PDF -->
+            <a href="/pptx-to-pdf" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#D83B01"/>
+                        <text x="16" y="22" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
+                    </svg>
+                </div>
+                <h2>PPTX → PDF</h2>
+                <p>Transforma presentaciones en PDF listas para compartir e imprimir.</p>
+                <span class="card-link">Convertir ahora →</span>
+            </a>
+
+            <!-- PDF to Word -->
+            <a href="/pdf-to-word" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#E74C3C"/>
+                        <text x="16" y="21" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PDF</text>
+                    </svg>
+                </div>
+                <h2>PDF → Word</h2>
+                <p>Convierte tus PDF a documentos Word editables.</p>
+                <span class="card-link">Convertir ahora →</span>
+            </a>
+
+            <!-- PDF to PPTX -->
+            <a href="/pdf-to-pptx" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#D83B01"/>
+                        <text x="16" y="22" text-anchor="middle" fill="white" font-size="16" font-weight="bold">P</text>
+                    </svg>
+                </div>
+                <h2>PDF → PPTX</h2>
+                <p>Convierte tus PDF en presentaciones de PowerPoint editables.</p>
+                <span class="card-link">Convertir ahora →</span>
+            </a>
+
+            <!-- Split PDF -->
+            <a href="/split-pdf" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#E74C3C"/>
+                        <text x="16" y="21" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PDF</text>
+                        <line x1="6" y1="26" x2="26" y2="26" stroke="white" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <h2>Separar PDF</h2>
+                <p>Extrae páginas o divide por rangos. Ideal para fragmentar documentos.</p>
+                <span class="card-link">Separar ahora →</span>
+            </a>
+
+            <!-- Merge PDF -->
+            <a href="/merge-pdf" class="tool-card">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#E74C3C"/>
+                        <text x="16" y="21" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PDF</text>
+                        <path d="M9 24L23 24M16 18L16 28" stroke="white" stroke-width="1.2"/>
+                    </svg>
+                </div>
+                <h2>Unir PDF</h2>
+                <p>Combina múltiples PDF en uno solo de forma ordenada.</p>
+                <span class="card-link">Unir ahora →</span>
+            </a>
+
+            <!-- Información y requisitos (nueva tarjeta) -->
+            <div class="tool-card" style="cursor: default;">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 32 32" width="40" height="40">
+                        <rect width="32" height="32" rx="7" fill="#6B7280"/>
+                        <text x="16" y="22" text-anchor="middle" fill="white" font-size="18" font-weight="bold">i</text>
+                    </svg>
+                </div>
+                <h2>Información y requisitos</h2>
+                <p><strong>Sistema requerido:</strong> Windows con Microsoft Office (Word, PowerPoint) instalado.<br>
+                <strong>Procesamiento 100% local:</strong> tus archivos nunca salen de tu equipo.<br>
+                <strong>Límite:</strong> 50 MB por archivo.</p>
+                <span class="card-link" style="color: #9CA3AF;">Solo Windows</span>
+            </div>
+        </div>
+        
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy;desarrollado por JosDvp</p>
+        <p>El sitio web o aplicacion no se hace responsable de los problemas que puedan presentar , el manejo es 100% local</p>
+    </footer>
+
+    <div id="toast" class="toast">Operación completada</div>
+
+    <script src="static/js/index.js"></script>
+    <script>
+        // You can add any dashboard-specific JavaScript here if needed
+        console.log("Dashboard cargado. Haz clic en cualquier herramienta para comenzar.");
+    </script>
+</body>
+</html>
