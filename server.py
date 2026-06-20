@@ -55,6 +55,10 @@ async def split_pdf(request : Request):
 async def merge_pdf(request : Request):
     return templates.TemplateResponse("merge-pdf.html", {"request":request})
 
+@app.get("/delete-pages", response_class=HTMLResponse)
+async def delete_pages_form(request: Request):
+    return templates.TemplateResponse("delete-pages.html", {"request": request})
+
 
 #metodos post
 @app.post("/convert-word-to-pdf")
@@ -523,114 +527,49 @@ async def merge_pdf(files: list[UploadFile] = File(...)):
         headers={"Content-Disposition": "attachment; filename=documento_unido.pdf"}
     )
 
-#opciones to run 
+@app.post("/delete-pages")
+async def delete_pages(
+    file: UploadFile = File(...),
+    paginas: str = Form(...),       # ej: "4,9" o "1-3,5,8-10"
+    modo: str = Form("eliminar")    # "eliminar" o "conservar"
+):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="El archivo debe ser PDF")
+    if modo not in ("eliminar", "conservar"):
+        raise HTTPException(status_code=400, detail="Modo no válido. Use 'eliminar' o 'conservar'")
 
-import socket
-import uvicorn
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Guardar PDF subido
+        pdf_path = os.path.join(tmpdir, file.filename)
+        content = await file.read()
+        with open(pdf_path, "wb") as f:
+            f.write(content)
 
-def get_local_ip():
-    """
-    Obtiene la IP local de la máquina.
-    """
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Nombre de salida seguro
+        base_name = os.path.splitext(file.filename)[0]
+        safe_base = "".join(c for c in base_name if c.isalnum() or c in (' ', '-', '_')).rstrip() or "documento"
+        output_pdf = os.path.join(tmpdir, f"{safe_base}_modificado.pdf")
 
-        # No se conecta realmente, solo obtiene la IP usada
-        s.connect(("8.8.8.8", 80))
+        try:
+            convert.eliminar_paginas_personalizado(
+                pdf_entrada=pdf_path,
+                pdf_salida=output_pdf,
+                especificacion=paginas,
+                modo=modo
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
 
-        ip = s.getsockname()[0]
-        s.close()
+        with open(output_pdf, "rb") as f:
+            pdf_data = f.read()
 
-        return ip
-
-    except Exception:
-        return "127.0.0.1"
-
-
-def run_server(mode="local", port=8000):
-    """
-    Ejecuta el servidor en modo local o LAN.
-    """
-
-    ip = get_local_ip()
-
-    print("\n==============================")
-    print("      CONFIGURACIÓN API")
-    print("==============================")
-
-    if mode == "local":
-
-        print("Modo seleccionado -> LOCAL")
-        print("Solo esta PC podrá acceder.")
-        print(f"Puerto -> {port}")
-        print(f"URL -> http://localhost:{port}")
-        print("Nota: Presiona CTRL + c para cerrar el servidor.")
-
-        uvicorn.run(
-            app,
-            host="127.0.0.1",
-            port=port,
-            reload=False
-        )
-
-    elif mode == "lan":
-
-        print("Modo seleccionado -> LAN")
-        print("Disponible para otros dispositivos en la misma red.")
-        print(f"IP local -> {ip}")
-        print(f"Puerto -> {port}")
-        print(f"URL -> http://{ip}:{port}")
-        print("Nota: Presiona CTRL + c para cerrar el servidor.")
-
-        uvicorn.run(
-            app,
-            host="0.0.0.0",
-            port=port,
-            reload=False
-        )
-
-    else:
-        print("Modo inválido.")
-
-
-def menu():
-    print("\n==============================")
-    print("        SERVIDOR API")
-    print("==============================")
-
-    print("1 -> Modo LOCAL")
-    print("2 -> Modo LAN")
-
-    print("\n¿Qué es LOCAL?")
-    print("Solo esta computadora podrá usar la API.")
-
-    print("\n¿Qué es LAN?")
-    print("Otros dispositivos en el mismo WiFi podrán acceder.")
-
-    opcion = input("\nSelecciona una opción: ").strip()
-
-    puerto = input("Puerto (ENTER = 8000): ").strip()
-
-    # Puerto por defecto
-    if not puerto:
-        puerto = 8000
-
-    try:
-        puerto = int(puerto)
-
-    except ValueError:
-        print("Puerto inválido.")
-        return
-
-    if opcion == "1":
-        run_server("local", puerto)
-
-    elif opcion == "2":
-        run_server("lan", puerto)
-
-    else:
-        print("Opción inválida.")
-
-
-if __name__ == "__main__":
-    menu()
+    accion = "eliminadas" if modo == "eliminar" else "conservadas"
+    return StreamingResponse(
+        iter([pdf_data]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={safe_base}_paginas_{accion}.pdf"
+        }
+    )

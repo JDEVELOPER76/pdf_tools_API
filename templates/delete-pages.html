@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Eliminar Páginas | SuperPDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .transition-smooth { transition: all 0.2s ease-in-out; }
+        .drop-area { border: 2px dashed #cbd5e1; background-color: #f8fafc; }
+        .drop-area.drag-over { border-color: #3b82f6; background-color: #eff6ff; }
+        .file-list-item { display: flex; align-items: center; justify-content: space-between; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 0.5rem 1rem; margin-bottom: 0.5rem; }
+        .file-name { flex: 1; font-size: 0.9rem; word-break: break-word; }
+        .remove-file { color: #ef4444; background: none; border: none; cursor: pointer; margin-left: 0.5rem; font-size: 1rem; }
+        .remove-file:hover { color: #dc2626; }
+        .progress-bar { height: 8px; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 1rem; }
+        .progress-fill { width: 0%; height: 100%; background-color: #3b82f6; transition: width 0.2s; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between">
+            <a href="/" class="text-2xl font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-2"><i class="fas fa-file-pdf text-red-500"></i><span>SuperPDF</span></a>
+            <nav class="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                <a href="/word-to-pdf" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">Word → PDF</a>
+                <a href="/pdf-to-word" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">PDF → Word</a>
+                <a href="/pdf-to-pptx" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">PDF → PPTX</a>
+                <a href="/pptx-to-pdf" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">PPTX → PDF</a>
+                <a href="/split-pdf" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">Dividir PDF</a>
+                <a href="/merge-pdf" class="px-3 py-1.5 text-sm font-medium rounded-full text-gray-600 hover:bg-gray-100">Unir PDF</a>
+                <a href="/delete-pages" class="px-3 py-1.5 text-sm font-medium rounded-full bg-indigo-100 text-indigo-800 hover:bg-indigo-200">Eliminar Páginas</a>
+            </nav>
+        </div>
+    </header>
+    <main class="container mx-auto px-4 py-12 max-w-3xl">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-3">Eliminar o conservar <span class="text-indigo-600">páginas personalizadas</span></h1>
+            <p class="text-lg text-gray-600">Sube un PDF, elige las páginas y descarga el resultado al instante.</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="p-6 md:p-8">
+                <!-- Subida de archivo -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Selecciona tu archivo PDF</label>
+                    <div id="dropArea" class="drop-area rounded-xl p-8 text-center cursor-pointer transition-smooth">
+                        <i class="fas fa-file-pdf text-5xl text-red-500 mb-3"></i>
+                        <p class="text-gray-600 mb-2 font-medium">Arrastra y suelta tu PDF aquí</p>
+                        <p class="text-sm text-gray-400">o</p>
+                        <button type="button" id="browseBtn" class="mt-3 inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-5 rounded-lg shadow-sm"><i class="fas fa-folder-open"></i> Examinar</button>
+                        <input type="file" id="fileInput" accept=".pdf" style="display:none">
+                    </div>
+                </div>
+                <!-- Lista del archivo seleccionado -->
+                <div id="fileListContainer" class="mb-6 hidden">
+                    <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-700">Archivo a procesar</span><button type="button" id="clearAllBtn" class="text-xs text-red-500 hover:text-red-700">Eliminar</button></div>
+                    <div id="fileList" class="space-y-2"></div>
+                </div>
+                <!-- Especificación de páginas y modo -->
+                <div id="configContainer" class="mb-6 hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1">Páginas (ej: 4,9 o 1-3,5,8-10)</label>
+                            <input type="text" id="pagesInput" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400" placeholder="4,9">
+                            <p class="text-xs text-gray-500 mt-1">Puedes usar números sueltos y/o rangos separados por coma.</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-1">Modo de operación</label>
+                            <select id="modeSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400">
+                                <option value="eliminar">Eliminar las páginas indicadas</option>
+                                <option value="conservar">Conservar solo las páginas indicadas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Barra de progreso -->
+                <div id="progressContainer" class="hidden mb-4"><div class="flex justify-between text-xs text-gray-600 mb-1"><span>Procesando...</span><span id="progressPercent">0%</span></div><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div></div>
+                <!-- Botón de acción -->
+                <div class="flex justify-center"><button id="processBtn" disabled class="w-full md:w-auto bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg opacity-50 cursor-not-allowed"><i class="fas fa-cut"></i> Procesar PDF</button></div>
+                <!-- Indicador de carga -->
+                <div id="loadingIndicator" class="hidden mt-6"><div class="flex items-center justify-center gap-3 text-indigo-600"><i class="fas fa-spinner fa-pulse fa-2x"></i><span class="font-medium">Aplicando cambios, por favor espera...</span></div></div>
+                <!-- Mensajes -->
+                <div id="messageContainer" class="mt-6 hidden"></div>
+            </div>
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 text-sm text-gray-500 flex flex-wrap justify-between items-center gap-2"><div><i class="fas fa-shield-alt text-indigo-400"></i> Procesamiento seguro · Archivos eliminados tras la descarga</div><div><i class="fas fa-file-pdf"></i> PDF de salida mantiene la calidad</div><div><i class="fas fa-tachometer-alt"></i> Máximo 50 MB por archivo</div></div>
+        </div>
+    </main>
+    <footer class="text-center text-gray-500 text-sm py-8 border-t border-gray-200 mt-8"><p>© 2025 SuperPDF - Herramientas profesionales para documentos</p></footer>
+    <script>
+        let selectedFile = null;
+
+        const dropArea = document.getElementById('dropArea'),
+              browseBtn = document.getElementById('browseBtn'),
+              fileInput = document.getElementById('fileInput'),
+              fileListContainer = document.getElementById('fileListContainer'),
+              fileListDiv = document.getElementById('fileList'),
+              clearAllBtn = document.getElementById('clearAllBtn'),
+              configContainer = document.getElementById('configContainer'),
+              pagesInput = document.getElementById('pagesInput'),
+              modeSelect = document.getElementById('modeSelect'),
+              processBtn = document.getElementById('processBtn'),
+              loadingIndicator = document.getElementById('loadingIndicator'),
+              messageContainer = document.getElementById('messageContainer'),
+              progressContainer = document.getElementById('progressContainer'),
+              progressFill = document.getElementById('progressFill'),
+              progressPercent = document.getElementById('progressPercent');
+
+        // Abrir diálogo de archivo
+        dropArea.addEventListener('click', () => fileInput.click());
+        browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+
+        // Prevenir comportamientos por defecto
+        ['dragenter','dragover','dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, preventDefaults));
+        function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+        // Estilos drag & drop
+        ['dragenter','dragover'].forEach(ev => dropArea.addEventListener(ev, () => dropArea.classList.add('drag-over')));
+        ['dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, () => dropArea.classList.remove('drag-over')));
+
+        // Manejar archivos soltados o seleccionados
+        dropArea.addEventListener('drop', (e) => handleFile(e.dataTransfer.files));
+        fileInput.addEventListener('change', (e) => { handleFile(fileInput.files); fileInput.value = ''; });
+
+        function handleFile(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showMessage('El archivo debe ser un PDF.', 'error');
+                return;
+            }
+            if (file.size > 50 * 1024 * 1024) {
+                showMessage('El archivo supera los 50 MB.', 'error');
+                return;
+            }
+            selectedFile = file;
+            renderFileList();
+        }
+
+        function renderFileList() {
+            if (!selectedFile) {
+                fileListContainer.classList.add('hidden');
+                configContainer.classList.add('hidden');
+                processBtn.disabled = true;
+                processBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            fileListContainer.classList.remove('hidden');
+            configContainer.classList.remove('hidden');
+            processBtn.disabled = false;
+            processBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            fileListDiv.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = 'file-list-item';
+            div.innerHTML = `<div class="file-name"><i class="fas fa-file-pdf text-red-500 mr-2"></i>${escapeHtml(selectedFile.name)} (${(selectedFile.size/1024).toFixed(1)} KB)</div><button class="remove-file"><i class="fas fa-times-circle"></i></button>`;
+            div.querySelector('.remove-file').addEventListener('click', () => { selectedFile = null; renderFileList(); });
+            fileListDiv.appendChild(div);
+        }
+
+        clearAllBtn.addEventListener('click', () => { selectedFile = null; renderFileList(); });
+
+        processBtn.addEventListener('click', () => {
+            if (!selectedFile) return;
+            const pages = pagesInput.value.trim();
+            if (!pages) {
+                showMessage('Debes especificar las páginas (ej: 4,9).', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('paginas', pages);
+            formData.append('modo', modeSelect.value);
+
+            progressContainer.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            progressPercent.innerText = '0%';
+            processBtn.disabled = true;
+            processBtn.classList.add('opacity-50');
+            processBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Procesando...';
+            loadingIndicator.classList.remove('hidden');
+            messageContainer.classList.add('hidden');
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/delete-pages', true);
+            xhr.responseType = 'blob';
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    let p = Math.round((e.loaded / e.total) * 100);
+                    progressFill.style.width = p + '%';
+                    progressPercent.innerText = p + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    const blob = xhr.response;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    let filename = 'documento_modificado.pdf';
+                    const cd = xhr.getResponseHeader('content-disposition');
+                    if (cd && cd.includes('filename=')) {
+                        const match = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+                    }
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage('✅ PDF procesado correctamente. Descarga iniciada.', 'success');
+                    selectedFile = null;
+                    pagesInput.value = '';
+                    renderFileList();
+                } else {
+                    let errMsg = `Error ${xhr.status}`;
+                    try {
+                        const err = JSON.parse(xhr.responseText);
+                        errMsg = err.detail || errMsg;
+                    } catch(e) {}
+                    showMessage(`❌ Falló: ${errMsg}`, 'error');
+                }
+                processBtn.disabled = false;
+                processBtn.classList.remove('opacity-50');
+                processBtn.innerHTML = '<i class="fas fa-cut"></i> Procesar PDF';
+                loadingIndicator.classList.add('hidden');
+                progressContainer.classList.add('hidden');
+            };
+
+            xhr.onerror = () => {
+                showMessage('❌ Error de red. Inténtalo de nuevo.', 'error');
+                processBtn.disabled = false;
+                processBtn.classList.remove('opacity-50');
+                processBtn.innerHTML = '<i class="fas fa-cut"></i> Procesar PDF';
+                loadingIndicator.classList.add('hidden');
+                progressContainer.classList.add('hidden');
+            };
+
+            xhr.send(formData);
+        });
+
+        function showMessage(msg, type) {
+            messageContainer.classList.remove('hidden');
+            messageContainer.innerHTML = `<div class="rounded-lg p-4 flex items-center gap-3 shadow-sm ${type==='success'?'bg-green-50 text-green-800 border-l-4 border-green-500':'bg-red-50 text-red-800 border-l-4 border-red-500'}"><i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-triangle'} text-xl"></i><span>${escapeHtml(msg)}</span><button onclick="this.parentElement.parentElement.classList.add('hidden')" class="ml-auto text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button></div>`;
+            if (type === 'success') setTimeout(() => messageContainer.classList.add('hidden'), 6000);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        renderFileList();
+    </script>
+</body>
+</html>

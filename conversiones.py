@@ -5,6 +5,7 @@ import fitz
 import os
 from pptx import Presentation
 from pypdf import PdfReader, PdfWriter
+import re
 
 def convertir_word_a_pdf(word_path: str, pdf_path: str) -> None:
     """
@@ -85,3 +86,51 @@ def extraer_paginas(pdf, salida, inicio, fin):
         writer.write(f)
 
 
+def parsear_paginas(especificacion, total_paginas):
+    """Convierte una cadena como '4,9,11-13' en lista ordenada de números de página."""
+    paginas = set()
+    partes = especificacion.replace(' ', '').split(',')
+    for parte in partes:
+        if '-' in parte:
+            try:
+                inicio, fin = map(int, parte.split('-'))
+                if inicio > fin:
+                    raise ValueError(f"Rango invertido: {parte}")
+                paginas.update(range(inicio, fin + 1))
+            except ValueError:
+                raise ValueError(f"Rango mal formado: {parte}")
+        else:
+            try:
+                paginas.add(int(parte))
+            except ValueError:
+                raise ValueError(f"Número de página inválido: {parte}")
+
+    if any(p < 1 or p > total_paginas for p in paginas):
+        fuera = [p for p in paginas if p < 1 or p > total_paginas]
+        raise ValueError(f"Páginas fuera de rango (1-{total_paginas}): {fuera}")
+    return sorted(paginas)
+
+
+def eliminar_paginas_personalizado(pdf_entrada, pdf_salida, especificacion, modo='eliminar'):
+    """
+    Elimina o conserva páginas de un PDF según una especificación flexible.
+    modo: 'eliminar' (borra las listadas) o 'conservar' (mantiene solo las listadas).
+    """
+    reader = PdfReader(pdf_entrada)
+    total = len(reader.pages)
+    paginas_indicadas = parsear_paginas(especificacion, total)
+
+    writer = PdfWriter()
+
+    if modo == 'eliminar':
+        for i in range(total):
+            if (i + 1) not in paginas_indicadas:
+                writer.add_page(reader.pages[i])
+    elif modo == 'conservar':
+        for num_pagina in paginas_indicadas:
+            writer.add_page(reader.pages[num_pagina - 1])
+    else:
+        raise ValueError("El modo debe ser 'eliminar' o 'conservar'")
+
+    with open(pdf_salida, "wb") as f:
+        writer.write(f)
